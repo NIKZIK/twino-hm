@@ -49,12 +49,8 @@ export default {
   },
   data() {
     return {
-      selectedGroup: 0,
-      selectedQuestion: 0,
       groups: [],
-
       groupAnswers: [],
-
       answer: "",
       questions: [],
       questionIdx: 0,
