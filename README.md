@@ -10,7 +10,7 @@ npm install
 npm run start
 ```
 
-## You can build the project and host it
+## You can build the project and host it to localhost:3001
 ```
 npm run build
 npm run start
