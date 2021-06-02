@@ -5,7 +5,7 @@
     <div class="my-4">Here you can see and change your answers</div>
 
     <Collapsible
-      v-for="(group, index) of groups"
+      v-for="(group, index) of groupAnswers"
       :key="group.title"
       :title="group.title"
       :open="index === 0"
@@ -17,7 +17,7 @@
       >
         <div class="font-bold">{{ question.question }}</div>
         <div class="my-2 text-gray-400">
-          {{ answersHash[`${group.title}_${question.question}`] || "" }}
+          {{ question.answer }}
         </div>
       </div>
     </Collapsible>
@@ -28,7 +28,8 @@
 import Collapsible from "./controls/Collapsible.vue";
 
 export default {
-  props: ["groups", "answersHash"],
+  props: ["groupAnswers"],
+
   components: {
     Collapsible,
   },

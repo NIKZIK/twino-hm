@@ -1,8 +1,8 @@
 <template>
   <div class="mt-8">
     <Choices
-      :title="question.question"
-      :choices="question.answers"
+      :title="title"
+      :choices="answers"
       :value="value"
       @change="onChange"
     />
@@ -13,7 +13,7 @@
 import Choices from "./controls/Choices.vue";
 
 export default {
-  props: ["title", "question", "value"],
+  props: ["title", "answers", "value"],
   components: {
     Choices,
   },

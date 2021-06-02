@@ -4,16 +4,22 @@
 
     <ProgressMultibar
       :groups="groups"
-      :groupId="selectedGroup"
-      :questionId="selectedQuestion"
-      :title="group.title"
+      :groupId="question.groupId || 0"
+      :groupProgress="groupProgress"
+      :progress="progress"
+      :title="question.group"
       :showDetails="!overview"
     />
 
-    <Overview v-if="overview" :groups="groups" :answersHash="answersHash" />
+    <Overview v-if="overview" :groupAnswers="groupAnswers" />
 
     <div v-else style="display: contents">
-      <GroupQuestion :question="question" :value="answer" @change="setAnswer" />
+      <GroupQuestion
+        :title="question.title || ''"
+        :answers="question.answers || []"
+        :value="answer"
+        @change="setAnswer"
+      />
 
       <Error :error="error"> Please provide answer </Error>
 
@@ -24,7 +30,6 @@
 </template>
 
 <script>
-/* import json from "../../server/resp.json"; */
 import GroupQuestion from "./GroupQuestion.vue";
 import Button from "./controls/Button.vue";
 import LinkButton from "./controls/LinkButton.vue";
@@ -47,20 +52,43 @@ export default {
       selectedGroup: 0,
       selectedQuestion: 0,
       groups: [],
-      answersHash: {},
+
+      groupAnswers: [],
+
       answer: "",
+      questions: [],
+      questionIdx: 0,
       error: false,
       overview: false,
     };
   },
 
   computed: {
-    group: function () {
-      return this.groups[this.selectedGroup] || {};
-    },
     question: function () {
-      const group = this.groups[this.selectedGroup] || {};
-      return (group.questions && group.questions[this.selectedQuestion]) || {};
+      return this.questions[this.questionIdx] || {};
+    },
+
+    progress: function () {
+      const size = this.questions.length;
+      const answered = this.questions.filter((a) => a.answer).length;
+
+      return size ? Math.round((answered * 100) / size) : 0;
+    },
+
+    groupProgress: function () {
+      if (
+        this.question.groupId !== undefined &&
+        this.groups[this.question.groupId]
+      ) {
+        const answered = this.questions.filter(
+          (a) => a.groupId === this.question.groupId && a.answer
+        ).length;
+        const total = this.groups[this.question.groupId].questions.length;
+
+        return Math.round((answered * 100) / total);
+      }
+
+      return 0;
     },
   },
 
@@ -78,60 +106,44 @@ export default {
       this.answer = "";
     },
 
-    /* Looking if already was answered */
-    getAnswer: function () {
-      const hash = `${this.group.title}_${this.question.question}`;
-      if (this.answersHash[hash]) this.answer = this.answersHash[hash];
-    },
-
     nextQuestion: function () {
       if (!this.answer) {
         this.error = true;
         return;
       }
 
-      this.error = false;
+      this.question["answer"] = this.answer;
+      this.answer = "";
 
-      this.updateAnswers();
-      /* looking for next question  */
-      if (
-        this.groups &&
-        this.groups[this.selectedGroup] &&
-        this.groups[this.selectedGroup].questions.length >
-          this.selectedQuestion + 1
-      ) {
-        this.selectedQuestion = this.selectedQuestion + 1;
-      } else if (this.groups && this.groups.length > this.selectedGroup + 1) {
-        this.selectedGroup += 1;
-        this.selectedQuestion = 0;
-      }
-
-      if (
-        this.selectedGroup + 1 === this.groups.length &&
-        this.group.questions &&
-        this.group.questions.length === this.selectedQuestion + 1
-      ) {
+      if (this.questions.length > this.questionIdx + 1) {
+        this.questionIdx += 1;
+      } else {
+        this.groupAnswers = this.prepareAnswers();
         this.overview = true;
       }
 
-      this.getAnswer();
+      if (this.question.answer) this.answer = this.question["answer"];
+    },
+
+    prepareAnswers: function () {
+      const arr = [];
+      for (let group of this.groups) {
+        let questions = this.questions.filter((a) => a.group === group.title);
+
+        arr.push({
+          title: group.title,
+          questions,
+        });
+      }
+      return arr;
     },
 
     prevQuestion: function () {
       this.error = false;
-
-      if (
-        this.groups &&
-        this.groups[this.selectedGroup] &&
-        this.selectedQuestion > 0
-      ) {
-        this.selectedQuestion -= 1;
-        this.getAnswer();
-      } else if (this.groups && this.selectedGroup > 0) {
-        this.selectedGroup -= 1;
-        this.selectedQuestion = 0;
-        this.getAnswer();
+      if (this.questionIdx > 0) {
+        this.questionIdx -= 1;
       }
+      if (this.question.answer) this.answer = this.question["answer"];
     },
   },
 
@@ -144,6 +156,22 @@ export default {
       });
 
       const json = await response.json();
+      const questions = [];
+      let groupId = 0;
+
+      for (let group of json.groups) {
+        for (let question of group.questions) {
+          questions.push({
+            groupId,
+            group: group.title,
+            question: question.question,
+            answers: question.answers,
+            answer: "",
+          });
+        }
+        groupId++;
+      }
+      this.questions = questions;
       this.groups = json.groups;
     } catch (e) {
       console.log("ERROR happened while fetching config", e);

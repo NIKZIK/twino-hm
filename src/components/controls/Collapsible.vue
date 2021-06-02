@@ -3,11 +3,11 @@
     <div class="flex">
       <div class="flex-1">{{ title }}</div>
       <div @click="toggle" class="font-bold text-blue-600">
-        {{ open ? "Show Less" : "Show More" }}
+        {{ openInner ? "Show Less" : "Show More" }}
       </div>
     </div>
 
-    <div v-if="open" class="mt-4"><slot> </slot></div>
+    <div v-if="openInner" class="mt-4"><slot> </slot></div>
   </div>
 </template>
 
@@ -16,12 +16,12 @@ export default {
   props: ["title", "open"],
   data() {
     return {
-      openInner: open,
+      openInner: this.open,
     };
   },
   methods: {
     toggle: function () {
-      this.open = !this.open;
+      this.openInner = !this.openInner;
     },
   },
 };
