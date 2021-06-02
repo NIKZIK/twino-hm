@@ -15,7 +15,7 @@
 
     <div v-else style="display: contents">
       <GroupQuestion
-        :title="question.title || ''"
+        :title="question.question || ''"
         :answers="question.answers || []"
         :value="answer"
         @change="setAnswer"
